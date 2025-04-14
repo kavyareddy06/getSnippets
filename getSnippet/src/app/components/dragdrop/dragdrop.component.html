@@ -1,0 +1,26 @@
+<div class="container">
+    <!-- Left panel: Drag options -->
+    <div class="left-panel">
+      <h3>Drag Components</h3>
+      <div *ngFor="let item of items"
+           class="draggable"
+           draggable="true"
+           (dragstart)="onDragStart($event, item)">
+        {{ item }}
+      </div>
+    </div>
+  
+    <!-- Right panel: Editor -->
+    <div class="right-panel"
+         (drop)="onDrop($event)"
+         (dragover)="allowDrop($event)">
+      <h3>Code Snippets</h3>
+      <!-- <pre>{{ code }}</pre> -->
+      <div *ngFor="let snippet of snippets; let i = index" class="snippet-block">
+        <div class="snippet-header">Snippet {{ i + 1 }}</div>
+        <pre>{{ snippet }}</pre>
+      </div>
+      
+    </div>
+  </div>
+  
