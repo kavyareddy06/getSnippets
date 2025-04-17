@@ -1,0 +1,53 @@
+<div class="container">
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <label for="searchInput">Search Model:</label>
+    <input id="searchInput" type="text" [(ngModel)]="searchText" (input)="onSearch()" placeholder="Enter model or keyword..." />
+    <button *ngIf="searchText" (click)="clearSearch()">×</button>
+  </div>
+
+  <div class="main-section">
+    <!-- Left Panel: Model Info -->
+    <div class="model-panel" *ngIf="selectedModel">
+      <h2>{{ selectedModel }} Fields</h2>
+      <ul>
+        <li *ngFor="let field of currentFields | keyvalue">
+          <strong>{{ field.key }}</strong>: {{ field.value }}
+        </li>
+      </ul>
+
+      <!-- Nested Models -->
+      <div *ngIf="nestedModels.length">
+        <h3>Nested Models</h3>
+        <div class="accordion">
+          <div *ngFor="let model of nestedModels" class="accordion-item">
+            <button class="accordion-header" (click)="toggleExpansion(model)">
+              {{ model }} {{ expandedState[model] ? '▲' : '▼' }}
+            </button>
+            <div class="accordion-content" *ngIf="expandedState[model]">
+              <ul>
+                <li *ngFor="let subfield of extractFields(model) | keyvalue">
+                  <strong>{{ subfield.key }}</strong>: {{ subfield.value }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Matching Snippets -->
+    <div class="example-panel">
+      <h2>Matching Snippets</h2>
+      <div *ngIf="snippets.length; else noMatch">
+        <div *ngFor="let snippet of snippets; let i = index" class="snippet-block">
+          <div class="snippet-header">Snippet {{ i + 1 }}</div>
+          <pre>{{ snippet }}</pre>
+        </div>
+      </div>
+      <ng-template #noMatch>
+        <p>No matching examples found.</p>
+      </ng-template>
+    </div>
+  </div>
+</div>
