@@ -26,7 +26,7 @@
             </button>
             <div class="accordion-content" *ngIf="expandedState[model]">
               <ul>
-                <li *ngFor="let subfield of extractFields(model) | keyvalue">
+                <li *ngFor="let subfield of extractFieldsFromJson(model) | keyvalue">
                   <strong>{{ subfield.key }}</strong>: {{ subfield.value }}
                 </li>
               </ul>
