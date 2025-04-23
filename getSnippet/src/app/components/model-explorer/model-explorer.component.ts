@@ -20,11 +20,23 @@ export class ModelExplorerComponent {
 
   onSearch(): void {
     this.selectedModel = this.searchText;
-    const matchedObject = this.getObjectByKey(studioJson, this.searchText);
+    const matchedObjects = this.getAllObjectsByKey(studioJson, this.searchText);
 
-    if (matchedObject && typeof matchedObject === 'object') {
-      this.currentFields = this.getFieldTypes(matchedObject);
-      this.nestedModels = this.getNestedObjectKeys(matchedObject);
+    if (matchedObjects.length) {
+      const mergedFields: Record<string, string> = {};
+
+      matchedObjects.forEach(obj => {
+        const fields = this.getFieldTypes(obj);
+        Object.entries(fields).forEach(([key, type]) => {
+          mergedFields[key] = type;
+        });
+      });
+
+      this.currentFields = mergedFields;
+      this.nestedModels = Object.entries(mergedFields)
+        .filter(([_, type]) => type.startsWith('I'))
+        .map(([key]) => key);
+
       this.snippets = this.getMatchingSnippets(this.searchText);
 
       this.expandedState = {};
@@ -48,50 +60,51 @@ export class ModelExplorerComponent {
   }
 
   extractFieldsFromJson(modelKey: string): Record<string, string> {
-    const nestedObj = this.getObjectByKey(studioJson, modelKey);
-    return nestedObj ? this.getFieldTypes(nestedObj) : {};
+    const matchedObjects = this.getAllObjectsByKey(studioJson, modelKey);
+    const mergedFields: Record<string, string> = {};
+    matchedObjects.forEach(obj => {
+      const fields = this.getFieldTypes(obj);
+      Object.entries(fields).forEach(([key, type]) => {
+        mergedFields[key] = type;
+      });
+    });
+    return mergedFields;
   }
 
   getFieldTypes(obj: any): Record<string, string> {
     const fields: Record<string, string> = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        const value = obj[key];
-        fields[key] = typeof value === 'object' && value !== null ? 'object' : typeof value;
-      }
+      if (!obj.hasOwnProperty(key)) continue;
+      if (!isNaN(Number(key))) continue;
+  
+      const value = obj[key];
+      fields[key] =
+        typeof value === 'object' && value !== null
+          ? `I${this.capitalize(key)}`
+          : typeof value;
     }
     return fields;
   }
+  
 
-  getNestedObjectKeys(obj: any): string[] {
-    return Object.entries(obj)
-      .filter(([_, value]) => typeof value === 'object' && value !== null)
-      .map(([key]) => key);
-  }
-
-  getObjectByKey(json: any, targetKey: string): any | null {
-    let result: any = null;
+  getAllObjectsByKey(json: any, targetKey: string): any[] {
+    const matches: any[] = [];
 
     function search(obj: any) {
       if (Array.isArray(obj)) {
-        for (const item of obj) {
-          search(item);
-          if (result) break;
-        }
+        obj.forEach(item => search(item));
       } else if (typeof obj === 'object' && obj !== null) {
         for (const key in obj) {
-          if (key.toLowerCase() === targetKey.toLowerCase()) {
-            result = obj[key];
-            return;
+          if (key.toLowerCase() === targetKey.toLowerCase() && typeof obj[key] === 'object') {
+            matches.push(obj[key]);
           }
           search(obj[key]);
-          if (result) break;
         }
       }
     }
 
     search(json);
-    return result;
+    return matches;
   }
 
   getMatchingSnippets(keyword: string): string[] {
@@ -123,5 +136,9 @@ export class ModelExplorerComponent {
 
     search(studioJson);
     return matches.length ? matches.slice(0, 10) : ['No matching snippets found.'];
+  }
+
+  capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
   }
 }
